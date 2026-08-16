@@ -28,7 +28,7 @@ import {
     ThreadScreen,
 } from '@support/ui/screen';
 import {getRandomId, isAndroid, timeouts, wait, waitForElementToBeVisible} from '@support/utils';
-import {expect, waitFor} from 'detox';
+import {waitFor} from 'detox';
 
 describe('Threads - Follow and Unfollow Thread', () => {
     const serverOneDisplayName = 'Server 1';
