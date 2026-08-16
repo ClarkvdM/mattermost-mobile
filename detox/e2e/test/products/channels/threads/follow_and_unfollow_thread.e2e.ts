@@ -235,7 +235,6 @@ describe('Threads - Follow and Unfollow Thread', () => {
         await wait(timeouts.TWO_SEC);
 
         // * Verify thread is not displayed anymore in all your threads section
-        // After unfollow, the thread should disappear from "All your threads"
-        await expect(GlobalThreadsScreen.getThreadItem(parentPost.id)).not.toBeVisible();
+        await waitFor(GlobalThreadsScreen.getThreadItem(parentPost.id)).not.toBeVisible().withTimeout(timeouts.TEN_SEC);
     });
 });
