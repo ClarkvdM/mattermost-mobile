@@ -61,20 +61,6 @@ describe('Search - Saved Messages', () => {
         await HomeScreen.logout();
     });
 
-    it('MM-T4910_1 - should match elements on saved messages screen', async () => {
-        // # Open saved messages screen
-        await SavedMessagesScreen.open();
-
-        // * Verify basic elements on saved messages screen
-        await expect(SavedMessagesScreen.largeHeaderTitle).toHaveText('Saved Messages');
-        await expect(SavedMessagesScreen.largeHeaderSubtitle).toHaveText('All messages you\'ve saved for follow up');
-        await expect(SavedMessagesScreen.emptyTitle).toHaveText('No saved messages yet');
-        await expect(SavedMessagesScreen.emptyParagraph).toHaveText('To save something for later, long-press on a message and choose Save from the menu. Saved messages are only visible to you.');
-
-        // # Go back to channel list screen
-        await SavedMessagesScreen.close();
-    });
-
     it('MM-T4910_2 - should be able to display a saved message in saved messages screen and navigate to message channel', async () => {
         // # Open a channel screen, post a message, open post options for message, and tap on save option
         const message = `Message ${getRandomId()}`;
@@ -277,5 +263,24 @@ describe('Search - Saved Messages', () => {
         await PinnedMessagesScreen.back();
         await ChannelInfoScreen.close();
         await ChannelScreen.back();
+    });
+
+    // Run after save/unsave cases so the first Saved tab mount happens after a save
+    // (production order). Reload for a clean empty-state check after prior tests.
+    it('MM-T4910_1 - should match elements on saved messages screen', async () => {
+        await device.reloadReactNative();
+        await ChannelListScreen.toBeVisible();
+
+        // # Open saved messages screen
+        await SavedMessagesScreen.open();
+
+        // * Verify basic elements on saved messages screen
+        await expect(SavedMessagesScreen.largeHeaderTitle).toHaveText('Saved Messages');
+        await expect(SavedMessagesScreen.largeHeaderSubtitle).toHaveText('All messages you\'ve saved for follow up');
+        await expect(SavedMessagesScreen.emptyTitle).toHaveText('No saved messages yet');
+        await expect(SavedMessagesScreen.emptyParagraph).toHaveText('To save something for later, long-press on a message and choose Save from the menu. Saved messages are only visible to you.');
+
+        // # Go back to channel list screen
+        await SavedMessagesScreen.close();
     });
 });

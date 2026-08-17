@@ -293,7 +293,8 @@ describe('Channels - Channel Bookmarks', () => {
         await ChannelScreen.back();
     });
 
-    // Unskipped: createChannelBookmark whitelists body and drops invalid image_url.
+    // Unskipped: create omits invalid auto-detected image_url so sites like
+    // example.com (favicon data:,) still save as link bookmarks.
     it('MM-T5602_1 - should be able to add a bookmark link via channel info', async () => {
         // # Navigate to the channel
         await openChannel(channelT5602);
@@ -318,7 +319,8 @@ describe('Channels - Channel Bookmarks', () => {
         // * Verify the Add a bookmark modal opens
         await ChannelBookmarkScreen.toBeVisible();
 
-        // # Enter a stable URL and manual title — avoid OG autofill flakiness on Android CI
+        // # Enter a URL whose OG favicon is invalid (data:,) and a manual title —
+        // create must still succeed after omitting bad image_url.
         const linkInput = ChannelBookmarkScreen.getLinkInput();
         const bookmarkTitle = 'E2E Bookmark Link';
         await ChannelBookmarkScreen.runUnsynchronized(async () => {

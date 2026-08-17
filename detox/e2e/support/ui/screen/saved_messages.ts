@@ -72,17 +72,23 @@ class SavedMessagesScreen {
         await wait(timeouts.TWO_SEC);
     };
 
-    // Tab-switch once if the first paint still lags the preference write.
+    // freezeOnBlur keeps this tab mounted after the first visit. If Detox JSI misses
+    // the mount-time preference query, reload remounts against current SQLite.
+    remount = async () => {
+        await device.reloadReactNative();
+        await waitFor(element(by.id('channel_list.screen'))).toExist().withTimeout(timeouts.TWENTY_SEC);
+        await waitFor(HomeScreen.savedMessagesTab).toExist().withTimeout(timeouts.TEN_SEC);
+        await HomeScreen.savedMessagesTab.tap();
+        await this.toBeVisible();
+    };
+
     waitForPostInList = async (postId: string, text: string) => {
         const {postListPostItem} = this.getPostListPostItem(postId, text);
 
         try {
             await waitFor(postListPostItem).toExist().withTimeout(timeouts.TEN_SEC);
         } catch {
-            await HomeScreen.channelListTab.tap();
-            await wait(timeouts.ONE_SEC);
-            await HomeScreen.savedMessagesTab.tap();
-            await this.toBeVisible();
+            await this.remount();
             await waitFor(postListPostItem).toExist().withTimeout(timeouts.TEN_SEC);
         }
     };
@@ -126,10 +132,7 @@ class SavedMessagesScreen {
         try {
             await waitFor(postListPostItem).not.toExist().withTimeout(timeouts.TEN_SEC);
         } catch {
-            await HomeScreen.channelListTab.tap();
-            await wait(timeouts.ONE_SEC);
-            await HomeScreen.savedMessagesTab.tap();
-            await this.toBeVisible();
+            await this.remount();
             await waitFor(postListPostItem).not.toExist().withTimeout(timeouts.TEN_SEC);
         }
     };
