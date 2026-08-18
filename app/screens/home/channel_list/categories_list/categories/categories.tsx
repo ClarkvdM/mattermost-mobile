@@ -205,13 +205,14 @@ const Categories = ({flattenedItems, unreadChannelIds, onlyUnreads, isTablet, li
 
     const showEmptyState = onlyUnreads && flattenedItems.length === 0 && !isTablet;
     const showLoading = switchingTeam || initialLoad || (isInitialSync && flattenedItems.length === 0);
+    const showLoadError = flattenedItems.length === 0 && !switchingTeam && !initialLoad && !onlyUnreads && !isInitialSync;
 
     useEffect(() => {
-        if (showLoading) {
-            return;
+        // FlashList v2 onLoad does not fire for empty data / ListEmptyComponent.
+        if (!showLoading && flattenedItems.length === 0) {
+            hideLaunchSplashAfterChannelsPainted();
         }
-        hideLaunchSplashAfterChannelsPainted();
-    }, [showLoading]);
+    }, [showLoading, flattenedItems.length]);
 
     const ListEmptyComponent = useMemo(() => {
         if (showEmptyState) {
@@ -224,7 +225,7 @@ const Categories = ({flattenedItems, unreadChannelIds, onlyUnreads, isTablet, li
         return undefined;
     }, [showEmptyState, listHeight]);
 
-    if (flattenedItems.length === 0 && !switchingTeam && !initialLoad && !onlyUnreads && !isInitialSync) {
+    if (showLoadError) {
         return <LoadCategoriesError/>;
     }
 
@@ -242,6 +243,7 @@ const Categories = ({flattenedItems, unreadChannelIds, onlyUnreads, isTablet, li
                     showsHorizontalScrollIndicator={false}
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={ListEmptyComponent}
+                    onLoad={hideLaunchSplashAfterChannelsPainted}
                     onViewableItemsChanged={onViewableItemsChanged}
                     viewabilityConfig={VIEWABILITY_CONFIG}
                 />
