@@ -9,6 +9,7 @@
 
 import {
     Post,
+    Preference,
     Setup,
 } from '@support/server_api';
 import {
@@ -162,9 +163,12 @@ describe('Search - Saved Messages', () => {
         // * Verify reply count and thread follow control on the saved message
         await waitForElementToBeVisible(element(by.text('1 reply')), timeouts.TWO_SEC);
 
-        // This suite does not enable ThreadAutoFollow, so replying does not auto-follow the
-        // thread and the footer shows "Follow" rather than "Following".
-        await waitForElementToBeVisible(element(by.text('Follow')), timeouts.TWO_SEC);
+        // Replying auto-follows locally (createThreadFromNewPost). The footer must stay
+        // Following — do not match by.text('Follow'), which misses Following.
+        await waitForElementToBeVisible(
+            element(by.id('post_footer.following_thread.button')),
+            timeouts.TWO_SEC,
+        );
 
         // # Open post options for updated saved message and delete post
         await postListPostItem.longPress(timeouts.TWO_SEC);
@@ -266,8 +270,30 @@ describe('Search - Saved Messages', () => {
     });
 
     // Run after save/unsave cases so the first Saved tab mount happens after a save
-    // (production order). Reload for a clean empty-state check after prior tests.
+    // (production order). Clear leftover flagged posts before the empty-state check.
     it('MM-T4910_1 - should match elements on saved messages screen', async () => {
+        const {order} = await Post.apiGetFlaggedPosts(siteOneUrl, testUser.id);
+        if (order.length) {
+            const {error} = await Preference.apiDeleteUserPreferences(
+                siteOneUrl,
+                testUser.id,
+                order.map((postId: string) => ({
+                    user_id: testUser.id,
+                    category: 'flagged_post',
+                    name: postId,
+                    value: 'true',
+                })),
+            );
+            if (error) {
+                throw new Error(`Failed to clear leftover saved posts: ${JSON.stringify(error)}`);
+            }
+            /* eslint-disable no-await-in-loop -- wait until each leftover save is gone from the flagged index */
+            for (const postId of order) {
+                await Post.waitForPostUnflagged(siteOneUrl, testUser.id, postId);
+            }
+            /* eslint-enable no-await-in-loop */
+        }
+
         await device.reloadReactNative();
         await ChannelListScreen.toBeVisible();
 

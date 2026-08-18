@@ -26,12 +26,11 @@ import {
     LoginScreen,
     ServerScreen,
 } from '@support/ui/screen';
-import {isAndroid, isIos, safeEnableSynchronization, timeouts, wait, waitForElementToExist, waitForElementToNotExist} from '@support/utils';
+import {isAndroid, isIos, timeouts, wait, waitForElementToExist, waitForElementToNotExist} from '@support/utils';
 import {expect, waitFor} from 'detox';
 
 describe('Channels - Channel Bookmarks', () => {
     const serverOneDisplayName = 'Server 1';
-    const channelsCategory = 'channels';
     let testTeam: any;
     let testUser: any;
     let channelT5600: any;
@@ -81,57 +80,21 @@ describe('Channels - Channel Bookmarks', () => {
         return channel;
     };
 
-    // Scroll channel list to top after FlashList mounts — off-screen channels need scroll-down from top.
+    // Scroll channel list to top after FlashList mounts, then tap the row container
+    // (not the clipped display-name label) via the shared sidebar helper.
     const openChannel = async (channel: any) => {
         await ChannelListScreen.toBeVisible();
-        const displayNameEl = ChannelListScreen.getChannelItemDisplayName(channelsCategory, channel.name);
         await waitFor(element(by.id('channel_list.flat_list'))).
             toExist().
             withTimeout(timeouts.TWENTY_SEC);
 
-        if (isIos()) {
-            await device.disableSynchronization();
-        }
-
         try {
             await element(by.id('channel_list.flat_list')).scrollTo('top');
-
-            try {
-                if (isIos()) {
-                    await waitFor(displayNameEl).
-                        toBeVisible(40).
-                        whileElement(by.id('channel_list.flat_list')).
-                        scroll(100, 'down', 0.5, 0.3);
-                } else {
-                    await waitFor(displayNameEl).
-                        toExist().
-                        whileElement(by.id('channel_list.flat_list')).
-                        scroll(100, 'down');
-                }
-            } catch {
-                // Fall through to tap(): the row can sit at the bottom edge below the
-                // visibility threshold while still having a hittable centre point.
-            }
-
-            // Ensure a partial-visibility pass before tap — Detox tap() still enforces visibility.
-            try {
-                await waitFor(displayNameEl).toBeVisible(40).withTimeout(timeouts.FOUR_SEC);
-            } catch {
-                await waitFor(displayNameEl).toExist().withTimeout(timeouts.FOUR_SEC);
-            }
-
-            // List-edge rows can be ~40% visible (visible height ~10 of 24).
-            // Default center tap aims below the clip and fails "not hittable at its visible point".
-            if (isIos()) {
-                await displayNameEl.tap({x: 20, y: 2});
-            } else {
-                await displayNameEl.tap();
-            }
-        } finally {
-            if (isIos()) {
-                await safeEnableSynchronization();
-            }
+        } catch {
+            // List too short to scroll
         }
+
+        await ChannelListScreen.tapSidebarPublicChannelDisplayName(channel.name);
 
         await ChannelScreen.dismissScheduledPostTooltip();
         const channelScreen = await ChannelScreen.toBeVisible();

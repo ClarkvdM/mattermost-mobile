@@ -145,7 +145,8 @@ class ChannelSettingsScreen {
             // is insufficient on slow iOS CI runners where the dismiss animation can take
             // longer, leaving the dimming view blocking subsequent taps.
             await waitFor(alertUnarchiveChannelTitle).not.toExist().withTimeout(timeouts.TEN_SEC);
-            await expect(this.channelSettingsScreen).not.toExist();
+            // Unarchive pops settings after the API returns; wait like archiveChannel.
+            await waitForElementToNotExist(this.channelSettingsScreen, timeouts.TEN_SEC);
         } else {
             await noButton.tap();
             await waitFor(alertUnarchiveChannelTitle).not.toExist().withTimeout(timeouts.TEN_SEC);

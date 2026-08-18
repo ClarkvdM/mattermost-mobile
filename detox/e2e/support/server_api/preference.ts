@@ -115,12 +115,34 @@ export const apiSaveUserPreferences = async (baseUrl: string, userId: string, pr
     }
 };
 
+/**
+ * Delete the user's preferences.
+ * See https://api.mattermost.com/#operation/DeletePreferences
+ * @param {string} baseUrl - the base server URL
+ * @param {string} userId - the user ID
+ * @param {Array} preferences - a list of user's preferences to delete
+ * @return {string} returns {status} on success or {error, status} on error
+ */
+export const apiDeleteUserPreferences = async (baseUrl: string, userId: string, preferences: any[] = []): Promise<any> => {
+    try {
+        const response = await client.delete(
+            `${baseUrl}/api/v4/users/${userId}/preferences`,
+            {data: preferences},
+        );
+
+        return {status: response.status};
+    } catch (err) {
+        return getResponseFromError(err);
+    }
+};
+
 export const Preference = {
     apiGetUserPreferences,
     apiSaveFavoriteChannelPreference,
     apiSaveTeammateNameDisplayPreference,
     apiSaveTeamsOrderPreference,
     apiSaveUserPreferences,
+    apiDeleteUserPreferences,
 };
 
 export default Preference;
