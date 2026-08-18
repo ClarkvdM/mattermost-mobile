@@ -80,10 +80,13 @@ describe('Channels - Channel Bookmarks', () => {
         return channel;
     };
 
-    // Scroll channel list to top after FlashList mounts, then tap the row container
-    // (not the clipped display-name label) via the shared sidebar helper.
+    const channelsCategory = 'channels';
+
+    // Last sidebar rows sit under the tab bar with no extra scroll unless the list
+    // has bottom padding. Scroll the target into view and fail if it never is.
     const openChannel = async (channel: any) => {
         await ChannelListScreen.toBeVisible();
+        const displayNameEl = ChannelListScreen.getChannelItemDisplayName(channelsCategory, channel.name);
         await waitFor(element(by.id('channel_list.flat_list'))).
             toExist().
             withTimeout(timeouts.TWENTY_SEC);
@@ -94,8 +97,12 @@ describe('Channels - Channel Bookmarks', () => {
             // List too short to scroll
         }
 
-        await ChannelListScreen.tapSidebarPublicChannelDisplayName(channel.name);
+        await waitFor(displayNameEl).
+            toBeVisible().
+            whileElement(by.id('channel_list.flat_list')).
+            scroll(100, 'down');
 
+        await ChannelListScreen.tapSidebarPublicChannelDisplayName(channel.name);
         await ChannelScreen.dismissScheduledPostTooltip();
         const channelScreen = await ChannelScreen.toBeVisible();
         if (isIos()) {

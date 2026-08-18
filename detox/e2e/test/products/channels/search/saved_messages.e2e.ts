@@ -9,8 +9,8 @@
 
 import {
     Post,
-    Preference,
     Setup,
+    System,
 } from '@support/server_api';
 import {
     serverOneUrl,
@@ -46,6 +46,14 @@ describe('Search - Saved Messages', () => {
         testChannel = channel;
         testTeam = team;
         testUser = user;
+
+        // Reply should leave the thread Following (same CRT setup as reply_to_thread.e2e.ts).
+        await System.apiUpdateConfig(siteOneUrl, {
+            ServiceSettings: {
+                CollapsedThreads: 'always_on',
+                ThreadAutoFollow: true,
+            },
+        });
 
         // # Log in to server
         await ServerScreen.connectToServer(serverOneUrl, serverOneDisplayName);
@@ -100,8 +108,12 @@ describe('Search - Saved Messages', () => {
         const {postListPostItem: channelPostListPostItem} = ChannelScreen.getPostListPostItem(post.id, message);
         await expect(channelPostListPostItem).toBeVisible();
 
-        // # Go back to channel list screen
+        // # Unsave so later tests (empty state) are not polluted by this leftover
         await ChannelScreen.back();
+        await SavedMessagesScreen.open();
+        await SavedMessagesScreen.openPostOptionsFor(post.id, message);
+        await PostOptionsScreen.unsavePostOption.tap();
+        await SavedMessagesScreen.verifyPostUnsaved(post.id);
         await SavedMessagesScreen.close();
     });
 
@@ -163,11 +175,10 @@ describe('Search - Saved Messages', () => {
         // * Verify reply count and thread follow control on the saved message
         await waitForElementToBeVisible(element(by.text('1 reply')), timeouts.TWO_SEC);
 
-        // Replying auto-follows locally (createThreadFromNewPost). The footer must stay
-        // Following — do not match by.text('Follow'), which misses Following.
+        // Reply auto-follows (ThreadAutoFollow). Assert the Following control, not
+        // by.text('Follow'), which misses the Following label during the local flash.
         await waitForElementToBeVisible(
             element(by.id('post_footer.following_thread.button')),
-            timeouts.TWO_SEC,
         );
 
         // # Open post options for updated saved message and delete post
@@ -263,40 +274,20 @@ describe('Search - Saved Messages', () => {
         // * Verify saved message is not displayed anymore on pinned messages screen
         await waitFor(postListPostItem).not.toExist().withTimeout(timeouts.TEN_SEC);
 
-        // # Go back to channel list screen
+        // # Unsave so later tests (empty state) are not polluted by this leftover
         await PinnedMessagesScreen.back();
         await ChannelInfoScreen.close();
         await ChannelScreen.back();
+        await SavedMessagesScreen.open();
+        await SavedMessagesScreen.openPostOptionsFor(savedPost.id, message);
+        await PostOptionsScreen.unsavePostOption.tap();
+        await SavedMessagesScreen.verifyPostUnsaved(savedPost.id);
+        await SavedMessagesScreen.close();
     });
 
-    // Run after save/unsave cases so the first Saved tab mount happens after a save
-    // (production order). Clear leftover flagged posts before the empty-state check.
+    // Run last so the first Saved tab mount happens after a save (production order).
+    // Prior tests unsave or delete their posts, so this opens an empty list.
     it('MM-T4910_1 - should match elements on saved messages screen', async () => {
-        const {order} = await Post.apiGetFlaggedPosts(siteOneUrl, testUser.id);
-        if (order.length) {
-            const {error} = await Preference.apiDeleteUserPreferences(
-                siteOneUrl,
-                testUser.id,
-                order.map((postId: string) => ({
-                    user_id: testUser.id,
-                    category: 'flagged_post',
-                    name: postId,
-                    value: 'true',
-                })),
-            );
-            if (error) {
-                throw new Error(`Failed to clear leftover saved posts: ${JSON.stringify(error)}`);
-            }
-            /* eslint-disable no-await-in-loop -- wait until each leftover save is gone from the flagged index */
-            for (const postId of order) {
-                await Post.waitForPostUnflagged(siteOneUrl, testUser.id, postId);
-            }
-            /* eslint-enable no-await-in-loop */
-        }
-
-        await device.reloadReactNative();
-        await ChannelListScreen.toBeVisible();
-
         // # Open saved messages screen
         await SavedMessagesScreen.open();
 
