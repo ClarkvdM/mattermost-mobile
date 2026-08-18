@@ -72,10 +72,11 @@ class SavedMessagesScreen {
         await wait(timeouts.TWO_SEC);
     };
 
-    // freezeOnBlur keeps this tab mounted after the first visit. If Detox JSI misses
-    // the mount-time preference query, reload remounts against current SQLite.
+    // freezeOnBlur keeps this tab mounted. Leaving and returning re-runs the
+    // isFocused fetch. reloadReactNative SIGSEGVs in Reanimated's animation
+    // frame queue on iOS CI (T4910_3).
     remount = async () => {
-        await device.reloadReactNative();
+        await HomeScreen.channelListTab.tap();
         await waitFor(element(by.id('channel_list.screen'))).toExist().withTimeout(timeouts.TWENTY_SEC);
         await waitFor(HomeScreen.savedMessagesTab).toExist().withTimeout(timeouts.TEN_SEC);
         await HomeScreen.savedMessagesTab.tap();

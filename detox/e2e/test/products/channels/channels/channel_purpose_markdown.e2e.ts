@@ -76,7 +76,7 @@ describe('Channels - Channel Purpose Markdown', () => {
         const purposeChannelDisplayNameEl = ChannelListScreen.getChannelItemDisplayName(channelsCategory, purposeChannel.name);
         await element(by.id('channel_list.flat_list')).scrollTo('top');
         await waitFor(purposeChannelDisplayNameEl).toBeVisible().
-            whileElement(by.id('channel_list.flat_list')).scroll(100, 'down');
+            whileElement(by.id('channel_list.flat_list')).scroll(100, 'down', 0.5, 0.5);
         await purposeChannelDisplayNameEl.tap();
         await ChannelScreen.dismissScheduledPostTooltip();
         await ChannelScreen.toBeVisible();
