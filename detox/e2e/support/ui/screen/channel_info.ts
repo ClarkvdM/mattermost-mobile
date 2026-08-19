@@ -353,6 +353,16 @@ class ChannelInfoScreen {
                 await waitFor(element(bookmarkMatcher)).toExist().withTimeout(perAttemptTimeout);
                 return;
             } catch (error) {
+                for (let swipe = 0; swipe < 3; swipe++) {
+                    try {
+                        await element(by.id(this.testID.bookmarksList)).swipe('left', 'fast', 0.8, 0.5, 0.5);
+                        await waitFor(element(bookmarkMatcher)).toExist().withTimeout(timeouts.TWO_SEC);
+                        return;
+                    } catch {
+                        // Continue through the virtualized horizontal list.
+                    }
+                }
+
                 if (attempt === MAX_RETRIES) {
                     if (textFallback) {
                         const headerMatcher = by.text(textFallback).
