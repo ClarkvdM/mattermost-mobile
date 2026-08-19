@@ -97,10 +97,13 @@ describe('Channels - Channel Bookmarks', () => {
             // List too short to scroll
         }
 
+        // Default scroll start is the bottom of the list, which sits under the
+        // tab bar (5865fcd T5612: "View is not scrollable at the given start
+        // point" {201, 701}; screenshot shows Channel fb6c26 clipped by tabs).
         await waitFor(displayNameEl).
             toBeVisible().
             whileElement(by.id('channel_list.flat_list')).
-            scroll(100, 'down');
+            scroll(100, 'down', 0.5, 0.5);
 
         await ChannelListScreen.tapSidebarPublicChannelDisplayName(channel.name);
         await ChannelScreen.dismissScheduledPostTooltip();

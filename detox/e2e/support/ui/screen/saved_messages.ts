@@ -72,13 +72,17 @@ class SavedMessagesScreen {
         await wait(timeouts.TWO_SEC);
     };
 
-    // freezeOnBlur keeps this tab mounted after the first visit. If Detox JSI misses
-    // the mount-time preference query, reload remounts against current SQLite.
+    // freezeOnBlur can leave this list stale. reloadReactNative SIGSEGVs in
+    // Reanimated on iOS CI (5865fcd T4910_3: Action received: reactNativeReload,
+    // then Signal 11, screenshot is SpringBoard). Pull-to-refresh re-runs
+    // fetchSavedPosts without tearing down the RN runtime.
     remount = async () => {
-        await device.reloadReactNative();
-        await waitFor(element(by.id('channel_list.screen'))).toExist().withTimeout(timeouts.TWENTY_SEC);
-        await waitFor(HomeScreen.savedMessagesTab).toExist().withTimeout(timeouts.TEN_SEC);
-        await HomeScreen.savedMessagesTab.tap();
+        try {
+            await this.getFlatPostList().swipe('down', 'slow', 0.5, 0.5, 0.25);
+        } catch {
+            // Empty list / not swipeable
+        }
+        await wait(timeouts.TWO_SEC);
         await this.toBeVisible();
     };
 

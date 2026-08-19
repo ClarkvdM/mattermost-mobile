@@ -291,6 +291,17 @@ describe('Search - Saved Messages', () => {
         // # Open saved messages screen
         await SavedMessagesScreen.open();
 
+        // T4910_3 on 5865fcd SIGSEGV'd during reloadReactNative before delete.
+        // Screenshot showed leftover "Message 1c9777" instead of empty state.
+        const {order: leftoverIds} = await Post.apiGetFlaggedPosts(siteOneUrl, testUser.id);
+        /* eslint-disable no-await-in-loop -- unsaves must finish before the empty-state assert */
+        for (const postId of leftoverIds) {
+            await SavedMessagesScreen.openPostOptionsFor(postId, '');
+            await PostOptionsScreen.unsavePostOption.tap();
+            await SavedMessagesScreen.verifyPostUnsaved(postId);
+        }
+        /* eslint-enable no-await-in-loop */
+
         // * Verify basic elements on saved messages screen
         await expect(SavedMessagesScreen.largeHeaderTitle).toHaveText('Saved Messages');
         await expect(SavedMessagesScreen.largeHeaderSubtitle).toHaveText('All messages you\'ve saved for follow up');
