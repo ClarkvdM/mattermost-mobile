@@ -97,13 +97,10 @@ describe('Channels - Channel Bookmarks', () => {
             // List too short to scroll
         }
 
-        // Default scroll start is the bottom of the list, which sits under the
-        // tab bar (CI T5612: start {201,701} vs visible height 504). Pin the
-        // gesture to the visible middle of the list.
         await waitFor(displayNameEl).
             toBeVisible().
             whileElement(by.id('channel_list.flat_list')).
-            scroll(100, 'down', 0.5, 0.5);
+            scroll(100, 'down');
 
         await ChannelListScreen.tapSidebarPublicChannelDisplayName(channel.name);
         await ChannelScreen.dismissScheduledPostTooltip();
