@@ -293,7 +293,11 @@ describe('Search - Saved Messages', () => {
 
         // T4910_3 on 5865fcd SIGSEGV'd during reloadReactNative before delete.
         // Screenshot showed leftover "Message 1c9777" instead of empty state.
-        const {order: leftoverIds} = await Post.apiGetFlaggedPosts(siteOneUrl, testUser.id);
+        const flagged = await Post.apiGetFlaggedPosts(siteOneUrl, testUser.id);
+        if (flagged.error) {
+            throw new Error(`MM-T4910_1: flagged posts lookup failed: ${JSON.stringify(flagged.error)}`);
+        }
+        const leftoverIds = flagged.order;
         /* eslint-disable no-await-in-loop -- unsaves must finish before the empty-state assert */
         for (const postId of leftoverIds) {
             await SavedMessagesScreen.openPostOptionsFor(postId, '');

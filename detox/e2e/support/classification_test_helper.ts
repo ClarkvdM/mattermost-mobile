@@ -3,13 +3,15 @@
 
 import System from '@support/server_api/system';
 import {timeouts} from '@support/utils';
+import {withTransportRetry} from '@support/utils/transport_retry';
 
 export const enableClassificationMarkings = async (baseUrl: string): Promise<void> => {
-    const patchResult = await System.apiPatchConfig(baseUrl, {
+    // Idempotent flag patch. CI cloud often drops the TCP response (axios 30s → status 0).
+    const patchResult = await withTransportRetry(() => System.apiPatchConfig(baseUrl, {
         FeatureFlags: {
             ClassificationMarkings: true,
         },
-    });
+    }));
     if (patchResult.error) {
         throw new Error(`enableClassificationMarkings: failed to patch server config: ${JSON.stringify(patchResult.error)}`);
     }
